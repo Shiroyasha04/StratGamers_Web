@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Members Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        table, th, td {
+            border: 1px solid #333;
+            border-collapse: collapse;
+            padding: 8px;
+        }
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        form input {
+            padding: 5px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>Member List</h1>
+<table id="membersTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Members will be injected here -->
+    </tbody>
+</table>
+
+<h2>Add New Member</h2>
+<form id="addMemberForm">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="text" id="role" placeholder="Role" required>
+    <button type="submit">Add Member</button>
+</form>
+
+<script>
+    const membersTableBody = document.querySelector('#membersTable tbody');
+    const addMemberForm = document.getElementById('addMemberForm');
+
+    // Fetch and display members
+    function loadMembers() {
+        fetch('http://localhost:8080/members')
+            .then(res => res.json())
+            .then(data => {
+                membersTableBody.innerHTML = ''; // Clear table
+                data.forEach(member => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${member.member_id}</td>
+                        <td>${member.member}</td>
+                        <td>${member.role}</td>
+                        <td><button onclick="deleteMember(${member.member_id})">Delete</button></td>
+                    `;
+                    membersTableBody.appendChild(row);
+                });
+            })
+            .catch(err => console.error('Failed to load members:', err));
+    }
+
+    // Add a new member
+    addMemberForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const member = document.getElementById('name').value;
+        const role = document.getElementById('role').value;
+
+        fetch('http://localhost:8080/members', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ member, role }),
+        })
+        .then(res => {
+            if (res.ok) {
+                loadMembers(); // Reload after adding
+                addMemberForm.reset();
+            } else {
+                alert('Failed to add member');
+            }
+        });
+    });
+
+    // Delete member by ID
+    function deleteMember(id) {
+        fetch(`http://localhost:8080/delmember/${id}`, {
+            method: 'DELETE',
+        })
+        .then(res => {
+            if (res.ok) {
+                loadMembers();
+            } else {
+                alert('Failed to delete member');
+            }
+        });
+    }
+
+    // Load members on page load
+    window.onload = loadMembers;
+</script>
+</body>
+</html>
